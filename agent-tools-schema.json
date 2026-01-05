@@ -1,0 +1,439 @@
+{
+  "tools": [
+    {
+      "name": "Task",
+      "description": "Launch a new agent to handle complex, multi-step tasks autonomously. The Task tool launches specialized agents (subprocesses) that autonomously handle complex tasks. Each agent type has specific capabilities and tools available to it.\n\nAvailable agent types and the tools they have access to:\n- general-purpose: General-purpose agent for researching complex questions, searching for code, and executing multi-step tasks.\n- statusline-setup: Use this agent to configure the user's Claude Code status line setting.\n- Explore: Fast agent specialized for exploring codebases. Use this when you need to quickly find files by patterns, search code for keywords, or answer questions about the codebase.\n- Plan: Software architect agent for designing implementation plans.\n- claude-code-guide: Use this agent when the user asks questions about Claude Code or the Claude Agent SDK.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["description", "prompt", "subagent_type"],
+        "additionalProperties": false,
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "A short (3-5 word) description of the task"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The task for the agent to perform"
+          },
+          "subagent_type": {
+            "type": "string",
+            "description": "The type of specialized agent to use for this task"
+          },
+          "model": {
+            "type": "string",
+            "enum": ["sonnet", "opus", "haiku"],
+            "description": "Optional model to use for this agent. If not specified, inherits from parent."
+          },
+          "resume": {
+            "type": "string",
+            "description": "Optional agent ID to resume from. If provided, the agent will continue from the previous execution transcript."
+          }
+        }
+      }
+    },
+    {
+      "name": "Bash",
+      "description": "Executes a given bash command in a persistent shell session with optional timeout, ensuring proper handling and security measures. This tool is for terminal operations like git, npm, docker, etc. DO NOT use it for file operations (reading, writing, editing, searching, finding files) - use the specialized tools for this instead.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["command"],
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The command to execute"
+          },
+          "description": {
+            "type": "string",
+            "description": "Clear, concise description of what this command does in 5-10 words, in active voice."
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Optional timeout in milliseconds (max 600000)"
+          },
+          "run_in_background": {
+            "type": "boolean",
+            "description": "Set to true to run this command in the background."
+          },
+          "dangerouslyDisableSandbox": {
+            "type": "boolean",
+            "description": "Set this to true to dangerously override sandbox mode and run commands without sandboxing."
+          }
+        }
+      }
+    },
+    {
+      "name": "Glob",
+      "description": "Fast file pattern matching tool that works with any codebase size. Supports glob patterns like \"**/*.js\" or \"src/**/*.ts\". Returns matching file paths sorted by modification time. Use this tool when you need to find files by name patterns.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["pattern"],
+        "additionalProperties": false,
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "The glob pattern to match files against"
+          },
+          "path": {
+            "type": "string",
+            "description": "The directory to search in. If not specified, the current working directory will be used."
+          }
+        }
+      }
+    },
+    {
+      "name": "Grep",
+      "description": "A powerful search tool built on ripgrep. Supports full regex syntax. Filter files with glob parameter or type parameter. Output modes: 'content' shows matching lines, 'files_with_matches' shows only file paths (default), 'count' shows match counts.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["pattern"],
+        "additionalProperties": false,
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "The regular expression pattern to search for in file contents"
+          },
+          "path": {
+            "type": "string",
+            "description": "File or directory to search in. Defaults to current working directory."
+          },
+          "glob": {
+            "type": "string",
+            "description": "Glob pattern to filter files (e.g. \"*.js\", \"*.{ts,tsx}\")"
+          },
+          "type": {
+            "type": "string",
+            "description": "File type to search (e.g., js, py, rust, go, java)"
+          },
+          "output_mode": {
+            "type": "string",
+            "enum": ["content", "files_with_matches", "count"],
+            "description": "Output mode: 'content', 'files_with_matches', or 'count'. Defaults to 'files_with_matches'."
+          },
+          "-i": {
+            "type": "boolean",
+            "description": "Case insensitive search"
+          },
+          "-n": {
+            "type": "boolean",
+            "description": "Show line numbers in output. Defaults to true."
+          },
+          "-A": {
+            "type": "number",
+            "description": "Number of lines to show after each match"
+          },
+          "-B": {
+            "type": "number",
+            "description": "Number of lines to show before each match"
+          },
+          "-C": {
+            "type": "number",
+            "description": "Number of lines to show before and after each match"
+          },
+          "multiline": {
+            "type": "boolean",
+            "description": "Enable multiline mode where . matches newlines and patterns can span lines. Default: false."
+          },
+          "head_limit": {
+            "type": "number",
+            "description": "Limit output to first N lines/entries"
+          },
+          "offset": {
+            "type": "number",
+            "description": "Skip first N lines/entries before applying head_limit. Defaults to 0."
+          }
+        }
+      }
+    },
+    {
+      "name": "Read",
+      "description": "Reads a file from the local filesystem. You can access any file directly by using this tool. By default, it reads up to 2000 lines starting from the beginning of the file. Can read images, PDFs, and Jupyter notebooks.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["file_path"],
+        "additionalProperties": false,
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "The absolute path to the file to read"
+          },
+          "offset": {
+            "type": "number",
+            "description": "The line number to start reading from. Only provide if the file is too large to read at once"
+          },
+          "limit": {
+            "type": "number",
+            "description": "The number of lines to read. Only provide if the file is too large to read at once."
+          }
+        }
+      }
+    },
+    {
+      "name": "Edit",
+      "description": "Performs exact string replacements in files. You must use your Read tool at least once in the conversation before editing. This tool will error if you attempt an edit without reading the file.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["file_path", "old_string", "new_string"],
+        "additionalProperties": false,
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "The absolute path to the file to modify"
+          },
+          "old_string": {
+            "type": "string",
+            "description": "The text to replace"
+          },
+          "new_string": {
+            "type": "string",
+            "description": "The text to replace it with (must be different from old_string)"
+          },
+          "replace_all": {
+            "type": "boolean",
+            "default": false,
+            "description": "Replace all occurrences of old_string (default false)"
+          }
+        }
+      }
+    },
+    {
+      "name": "Write",
+      "description": "Writes a file to the local filesystem. This tool will overwrite the existing file if there is one at the provided path. If this is an existing file, you MUST use the Read tool first to read the file's contents.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["file_path", "content"],
+        "additionalProperties": false,
+        "properties": {
+          "file_path": {
+            "type": "string",
+            "description": "The absolute path to the file to write (must be absolute, not relative)"
+          },
+          "content": {
+            "type": "string",
+            "description": "The content to write to the file"
+          }
+        }
+      }
+    },
+    {
+      "name": "NotebookEdit",
+      "description": "Completely replaces the contents of a specific cell in a Jupyter notebook (.ipynb file) with new source. Jupyter notebooks are interactive documents that combine code, text, and visualizations.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["notebook_path", "new_source"],
+        "additionalProperties": false,
+        "properties": {
+          "notebook_path": {
+            "type": "string",
+            "description": "The absolute path to the Jupyter notebook file to edit (must be absolute, not relative)"
+          },
+          "cell_id": {
+            "type": "string",
+            "description": "The ID of the cell to edit. When inserting a new cell, the new cell will be inserted after the cell with this ID."
+          },
+          "new_source": {
+            "type": "string",
+            "description": "The new source for the cell"
+          },
+          "cell_type": {
+            "type": "string",
+            "enum": ["code", "markdown"],
+            "description": "The type of the cell (code or markdown). If not specified, it defaults to the current cell type."
+          },
+          "edit_mode": {
+            "type": "string",
+            "enum": ["replace", "insert", "delete"],
+            "description": "The type of edit to make (replace, insert, delete). Defaults to replace."
+          }
+        }
+      }
+    },
+    {
+      "name": "WebFetch",
+      "description": "Fetches content from a specified URL and processes it using an AI model. Takes a URL and a prompt as input. Fetches the URL content, converts HTML to markdown. Processes the content with the prompt using a small, fast model. Includes a self-cleaning 15-minute cache for faster responses.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["url", "prompt"],
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL to fetch content from"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "The prompt to run on the fetched content"
+          }
+        }
+      }
+    },
+    {
+      "name": "TodoWrite",
+      "description": "Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["todos"],
+        "additionalProperties": false,
+        "properties": {
+          "todos": {
+            "type": "array",
+            "description": "The updated todo list",
+            "items": {
+              "type": "object",
+              "required": ["content", "status", "activeForm"],
+              "additionalProperties": false,
+              "properties": {
+                "content": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The imperative form describing what needs to be done (e.g., 'Run tests')"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": ["pending", "in_progress", "completed"],
+                  "description": "The current status of the task"
+                },
+                "activeForm": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The present continuous form shown during execution (e.g., 'Running tests')"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "WebSearch",
+      "description": "Allows Claude to search the web and use the results to inform responses. Provides up-to-date information for current events and recent data. Returns search result information formatted as search result blocks, including links as markdown hyperlinks.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["query"],
+        "additionalProperties": false,
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 2,
+            "description": "The search query to use"
+          },
+          "allowed_domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Only include search results from these domains"
+          },
+          "blocked_domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Never include search results from these domains"
+          }
+        }
+      }
+    },
+    {
+      "name": "BashOutput",
+      "description": "Retrieves output from a running or completed background bash shell. Takes a shell_id parameter identifying the shell. Always returns only new output since the last check.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["bash_id"],
+        "additionalProperties": false,
+        "properties": {
+          "bash_id": {
+            "type": "string",
+            "description": "The ID of the background shell to retrieve output from"
+          },
+          "filter": {
+            "type": "string",
+            "description": "Optional regular expression to filter the output lines."
+          }
+        }
+      }
+    },
+    {
+      "name": "KillShell",
+      "description": "Kills a running background bash shell by its ID. Takes a shell_id parameter identifying the shell to kill. Returns a success or failure status.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["shell_id"],
+        "additionalProperties": false,
+        "properties": {
+          "shell_id": {
+            "type": "string",
+            "description": "The ID of the background shell to kill"
+          }
+        }
+      }
+    },
+    {
+      "name": "Skill",
+      "description": "Execute a skill within the main conversation. When users ask you to perform tasks, check if any of the available skills can help complete the task more effectively. Skills provide specialized capabilities and domain knowledge.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["skill"],
+        "additionalProperties": false,
+        "properties": {
+          "skill": {
+            "type": "string",
+            "description": "The skill name (no arguments). E.g., 'pdf' or 'xlsx'"
+          }
+        }
+      }
+    },
+    {
+      "name": "SlashCommand",
+      "description": "Execute a slash command within the main conversation. When you use this tool or when a user types a slash command, you will see the expanded prompt.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "required": ["command"],
+        "additionalProperties": false,
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The slash command to execute with its arguments, e.g., '/review-pr 123'"
+          }
+        }
+      }
+    },
+    {
+      "name": "EnterPlanMode",
+      "description": "Use this tool when you encounter a complex task that requires careful planning and exploration before implementation. This tool transitions you into plan mode where you can thoroughly explore the codebase and design an implementation approach.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {}
+      }
+    },
+    {
+      "name": "ExitPlanMode",
+      "description": "Use this tool when you are in plan mode and have finished writing your plan to the plan file and are ready for user approval. Only use this tool when the task requires planning the implementation steps of a task that requires writing code.",
+      "parameters": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {}
+      }
+    }
+  ]
+}
